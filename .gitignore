@@ -1,0 +1,10 @@
+.venv/
+uv.lock
+__pycache__/
+*.pyc
+airflow/logs/
+airflow/keys/*.json
+dbt/target/
+dbt/logs/
+.terraform/
+*.tfstate*
