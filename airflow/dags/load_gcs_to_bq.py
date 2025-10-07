@@ -42,8 +42,12 @@ def _normalise_task_id(table_name: str) -> str:
 )
 def load_gcs_to_bq_dynamically() -> None:
     for table_name in TABLE_LIST:
-        BigQueryInsertJobOperator(
-            task_id=_normalise_task_id(table_name),
+        task_prefix = _normalise_task_id(table_name)
+        staging_table_name = f"{table_name}__staging"
+
+        # Stage the new slice for the day before merging it into the canonical table.
+        load_to_staging = BigQueryInsertJobOperator(
+            task_id=f"{task_prefix}_load_stage",
             location=BQ_LOCATION,
             configuration={
                 "load": {
@@ -51,16 +55,49 @@ def load_gcs_to_bq_dynamically() -> None:
                     "destinationTable": {
                         "projectId": PROJECT_ID,
                         "datasetId": BQ_DATASET,
-                        "tableId": table_name,
+                        "tableId": staging_table_name,
                     },
                     "sourceFormat": "CSV",
                     "skipLeadingRows": 1,
                     "autodetect": True,
-                    "writeDisposition": "WRITE_APPEND",
+                    "writeDisposition": "WRITE_TRUNCATE",
                     "createDisposition": "CREATE_IF_NEEDED",
                 }
             },
         )
+
+        deduplicate_target = BigQueryInsertJobOperator(
+            task_id=f"{task_prefix}_dedupe",
+            location=BQ_LOCATION,
+            configuration={
+                "query": {
+                    "query": f"""
+DECLARE target_exists BOOL DEFAULT EXISTS (
+  SELECT 1
+  FROM `{PROJECT_ID}.{BQ_DATASET}.__TABLES_SUMMARY__`
+  WHERE table_id = '{table_name}'
+);
+
+IF target_exists THEN
+  CREATE OR REPLACE TABLE `{PROJECT_ID}.{BQ_DATASET}.{table_name}` AS
+  SELECT * FROM (
+    SELECT * FROM `{PROJECT_ID}.{BQ_DATASET}.{table_name}`
+    UNION DISTINCT
+    SELECT * FROM `{PROJECT_ID}.{BQ_DATASET}.{staging_table_name}`
+  );
+ELSE
+  CREATE TABLE `{PROJECT_ID}.{BQ_DATASET}.{table_name}` AS
+  SELECT DISTINCT * FROM `{PROJECT_ID}.{BQ_DATASET}.{staging_table_name}`;
+END IF;
+
+DROP TABLE IF EXISTS `{PROJECT_ID}.{BQ_DATASET}.{staging_table_name}`;
+""",
+                    "useLegacySql": False,
+                }
+            },
+        )
+
+        load_to_staging >> deduplicate_target
 
 
 dag = load_gcs_to_bq_dynamically()
