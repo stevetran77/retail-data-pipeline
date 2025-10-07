@@ -1,7 +1,18 @@
 [project]
 name = "retail-data-pipeline"
 version = "0.1.0"
-description = "Add your description here"
-readme = "README.md"
 requires-python = ">=3.13"
-dependencies = []
+
+dependencies = [
+  # Airflow 3.0 core + Google provider
+  "apache-airflow==3.0.0",
+  "apache-airflow-providers-google>=12.0.0",
+  # dbt + BigQuery
+  "dbt-bigquery==1.8.2",
+  # GCP SDK & utils
+  "faker>=37.8.0",
+  "google-cloud-bigquery>=3.25.0",
+  "google-cloud-storage>=2.18.0",
+  "pandas>=2.2.2",
+  "pyarrow>=17.0.0",
+]
