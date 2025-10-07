@@ -84,7 +84,7 @@ def upload_to_gcs(job: Dict[str, str], gcp_conn_id: str = GCP_CONN_ID) -> str:
     start_date=datetime(2024, 1, 1),
     schedule=None,
     catchup=False,
-    tags=["gcs", "ingestion", "data_samples"],
+    tags=[ "ingestion"],
 )
 def ingest_data_samples_to_gcs() -> None:
     bucket = resolve_target_bucket()
