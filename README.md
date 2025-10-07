@@ -96,19 +96,29 @@ The DAG performs three steps:
 2. Discover only `.csv` files in `/opt/airflow/data_samples`.
 3. Upload each file with a dynamic task map using the connection `google_cloud_default`. Objects are written under `<yyyy-mm-dd>/<filename>` where the date is the UTC execution time.
 
-## 6. dbt Project (optional)
-The `dbt/retail` directory is a stub so you can layer transformations over the raw data. To start:
+## 6. dbt Project and Orchestration
+The `dbt/retail` directory contains the models that shape raw extracts into analytics layers. You can run them locally for development or orchestrate them from Airflow once the raw tables are populated.
+
+**Local runs**
 ```bash
 cd dbt/retail
 python -m venv .venv && source .venv/bin/activate  # or use uv/pipx
 pip install dbt-bigquery==1.8.2
 export DBT_PROJECT_ID=retail-data-pipeline-dev
-export DBT_DATASET=retail_core
+export DBT_DATASET=retail_prod
+export DBT_RAW_DATASET=retail_raw
 export GOOGLE_APPLICATION_CREDENTIALS=/path/to/airflow-sa.json
 dbt deps
-dbt run
+dbt run --select path:models/bronze
 ```
-Add your models to `models/` and reference the objects landed by the ingestion DAG.
+Run `dbt run --select path:models/silver path:models/gold` and `dbt test` once you are happy with the bronze layer.
+
+**Airflow runs**
+1. Trigger `load_gcs_to_bq` to land the latest CSVs into the raw dataset.
+2. Trigger `dbt_pipeline` to execute `dbt deps`, run bronze models, test them, then build the silver and gold layers in the `retail_prod` dataset.
+3. Inspect the run logs in the Airflow UI or BigQuery console to verify new tables.
+
+Environment variables such as `DBT_TARGET_DATASET`, `DBT_PROJECT_DIR`, and `DBT_PROFILES_DIR` are configurable via `airflow/.env` or the Compose file if you need to override defaults.
 
 ## 7. Useful Commands
 - List Airflow variables: `docker compose run --rm airflow-cli variables list`

@@ -1,0 +1,45 @@
+[0m10:45:44.310529 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'invocation', 'label': 'start', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x7d2c0b5ad040>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x7d2c0b5ac9b0>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x7d2c0b5ad820>]}
+
+
+============================== 10:45:44.345106 | 48ba8877-16a0-4463-9b2f-8d3d0c4414a7 ==============================
+[0m10:45:44.345106 [info ] [MainThread]: Running with dbt=1.7.9
+[0m10:45:44.348122 [debug] [MainThread]: running dbt with arguments {'printer_width': '80', 'indirect_selection': 'eager', 'log_cache_events': 'False', 'write_json': 'True', 'partial_parse': 'True', 'cache_selected_only': 'False', 'profiles_dir': '/opt/airflow/dbt/retail', 'fail_fast': 'False', 'warn_error': 'None', 'log_path': '/opt/airflow/dbt/retail/logs', 'debug': 'False', 'version_check': 'True', 'use_colors': 'True', 'use_experimental_parser': 'False', 'no_print': 'None', 'quiet': 'False', 'warn_error_options': 'WarnErrorOptions(include=[], exclude=[])', 'static_parser': 'True', 'log_format': 'default', 'introspect': 'True', 'target_path': 'None', 'invocation_command': 'dbt deps', 'send_anonymous_usage_stats': 'True'}
+[0m10:45:44.375464 [error] [MainThread]: Encountered an error:
+Compilation Error
+  Could not render {{ var('core_dataset') }}: Required var 'core_dataset' not found in config:
+  Vars supplied to <Configuration> = {}
+[0m10:45:44.377450 [debug] [MainThread]: Resource report: {"command_name": "deps", "command_wall_clock_time": 0.16960587, "process_user_time": 5.716847, "process_kernel_time": 0.573163, "process_mem_max_rss": "120156", "process_out_blocks": "13056", "command_success": false, "process_in_blocks": "0"}
+[0m10:45:44.379458 [debug] [MainThread]: Command `dbt deps` failed at 10:45:44.378864 after 0.17 seconds
+[0m10:45:44.380557 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'invocation', 'label': 'end', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x7d2c100772c0>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x7d2c0b604380>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x7d2c0b605e50>]}
+[0m10:45:44.381571 [debug] [MainThread]: Flushing usage events
+[0m10:46:15.476675 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'invocation', 'label': 'start', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x79cdaaa94fb0>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x79cdaade26c0>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x79cdaaa94e60>]}
+
+
+============================== 10:46:15.508395 | 4e5c7451-0d76-4f90-a2cb-c190dc0a6d9b ==============================
+[0m10:46:15.508395 [info ] [MainThread]: Running with dbt=1.7.9
+[0m10:46:15.511378 [debug] [MainThread]: running dbt with arguments {'printer_width': '80', 'indirect_selection': 'eager', 'write_json': 'True', 'log_cache_events': 'False', 'partial_parse': 'True', 'cache_selected_only': 'False', 'profiles_dir': '/opt/airflow/dbt/retail', 'version_check': 'True', 'debug': 'False', 'log_path': '/opt/airflow/dbt/retail/logs', 'fail_fast': 'False', 'warn_error': 'None', 'use_colors': 'True', 'use_experimental_parser': 'False', 'no_print': 'None', 'quiet': 'False', 'log_format': 'default', 'static_parser': 'True', 'introspect': 'True', 'warn_error_options': 'WarnErrorOptions(include=[], exclude=[])', 'target_path': 'None', 'invocation_command': 'dbt debug', 'send_anonymous_usage_stats': 'True'}
+[0m10:46:15.516922 [info ] [MainThread]: dbt version: 1.7.9
+[0m10:46:15.518845 [info ] [MainThread]: python version: 3.12.10
+[0m10:46:15.520642 [info ] [MainThread]: python path: /home/airflow/.local/bin/python
+[0m10:46:15.521841 [info ] [MainThread]: os info: Linux-6.6.87.2-microsoft-standard-WSL2-x86_64-with-glibc2.36
+[0m10:46:15.570088 [error] [MainThread]: Encountered an error:
+Parsing Error
+  Env var required but not provided: 'DBT_PROJECT_ID'
+[0m10:46:15.572073 [debug] [MainThread]: Resource report: {"command_name": "debug", "command_wall_clock_time": 0.21486267, "process_user_time": 4.851077, "process_kernel_time": 0.583755, "process_mem_max_rss": "120276", "process_out_blocks": "13056", "command_success": false, "process_in_blocks": "0"}
+[0m10:46:15.573623 [debug] [MainThread]: Command `dbt debug` failed at 10:46:15.573305 after 0.22 seconds
+[0m10:46:15.575061 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'invocation', 'label': 'end', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x79cdaade37d0>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x79cdaade26c0>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x79cdaacf3b90>]}
+[0m10:46:15.576425 [debug] [MainThread]: Flushing usage events
+[0m10:48:18.323257 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'invocation', 'label': 'start', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x7afb94cfd0a0>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x7afb94d6c560>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x7afb94cfe990>]}
+
+
+============================== 10:48:18.345704 | 41cc31ef-fd98-4c3f-a6de-95c2a514731c ==============================
+[0m10:48:18.345704 [info ] [MainThread]: Running with dbt=1.7.9
+[0m10:48:18.346770 [debug] [MainThread]: running dbt with arguments {'printer_width': '80', 'indirect_selection': 'eager', 'write_json': 'True', 'log_cache_events': 'False', 'partial_parse': 'True', 'cache_selected_only': 'False', 'profiles_dir': '/opt/airflow/dbt/retail', 'fail_fast': 'False', 'version_check': 'True', 'log_path': '/opt/airflow/dbt/retail/logs', 'debug': 'False', 'warn_error': 'None', 'use_colors': 'True', 'use_experimental_parser': 'False', 'no_print': 'None', 'quiet': 'False', 'log_format': 'default', 'invocation_command': 'dbt deps', 'static_parser': 'True', 'warn_error_options': 'WarnErrorOptions(include=[], exclude=[])', 'target_path': 'None', 'introspect': 'True', 'send_anonymous_usage_stats': 'True'}
+[0m10:48:18.366511 [error] [MainThread]: Encountered an error:
+Compilation Error
+  Could not render {{ var('core_dataset') }}: Required var 'core_dataset' not found in config:
+  Vars supplied to <Configuration> = {}
+[0m10:48:18.367892 [debug] [MainThread]: Resource report: {"command_name": "deps", "command_wall_clock_time": 0.11687918, "process_user_time": 3.194711, "process_kernel_time": 0.362363, "process_mem_max_rss": "120344", "process_out_blocks": "13056", "command_success": false, "process_in_blocks": "0"}
+[0m10:48:18.368792 [debug] [MainThread]: Command `dbt deps` failed at 10:48:18.368625 after 0.12 seconds
+[0m10:48:18.369418 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'invocation', 'label': 'end', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x7afb94d6ccb0>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x7afb94d5bb30>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x7afb953cc6b0>]}
+[0m10:48:18.369992 [debug] [MainThread]: Flushing usage events

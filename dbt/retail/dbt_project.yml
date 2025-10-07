@@ -1,0 +1,37 @@
+name: "retail"
+version: "0.1.0"
+config-version: 2
+
+profile: "retail"
+
+model-paths: ["models"]
+macro-paths: ["macros"]
+seed-paths: ["seeds"]
+test-paths: ["tests"]
+analysis-paths: ["analysis"]
+snapshot-paths: ["snapshots"]
+
+log-path: "logs"
+target-path: "target"
+clean-targets:
+  - "target"
+  - "dbt_packages"
+
+vars:
+  raw_dataset: "{{ env_var('DBT_RAW_DATASET', 'retail_raw') }}"
+  core_dataset: "{{ env_var('DBT_DATASET', 'retail_prod') }}"
+
+models:
+  retail:
+    +schema: "{{ var('core_dataset') }}"
+    +materialized: view
+    bronze:
+      +materialized: table
+    silver:
+      +materialized: view
+    gold:
+      +materialized: table
+
+seeds:
+  retail:
+    +schema: "{{ var('core_dataset') }}"

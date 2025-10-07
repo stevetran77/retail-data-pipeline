@@ -1,0 +1,42 @@
+version: 2
+
+sources:
+  - name: raw_csv
+    description: Raw CSV extracts staged in BigQuery via the ingestion pipeline.
+    database: "{{ env_var('DBT_PROJECT_ID') }}"
+    schema: "{{ var('raw_dataset') }}"
+    tables:
+      - name: orders
+        description: Online orders captured from the ecommerce platform.
+        columns:
+          - name: order_id
+            tests:
+              - not_null
+              - unique
+      - name: users
+        description: Customer dimension sourced from the transactional system.
+        columns:
+          - name: user_id
+            tests:
+              - not_null
+              - unique
+      - name: order_items
+        description: Line items for each order.
+        columns:
+          - name: order_id
+            tests:
+              - not_null
+      - name: products
+        description: Product catalog supporting order items.
+        columns:
+          - name: product_id
+            tests:
+              - not_null
+              - unique
+      - name: sessions
+        description: Web sessions used for traffic attribution.
+        columns:
+          - name: session_id
+            tests:
+              - not_null
+              - unique
