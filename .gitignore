@@ -4,6 +4,7 @@ __pycache__/
 *.pyc
 airflow/logs/
 airflow/keys/*.json
+airflow/.env
 dbt/target/
 dbt/logs/
 .terraform/
