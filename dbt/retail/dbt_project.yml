@@ -23,7 +23,6 @@ vars:
 
 models:
   retail:
-    +schema: "{{ var('core_dataset') }}"
     +materialized: view
     bronze:
       +materialized: table
@@ -34,4 +33,3 @@ models:
 
 seeds:
   retail:
-    +schema: "{{ var('core_dataset') }}"

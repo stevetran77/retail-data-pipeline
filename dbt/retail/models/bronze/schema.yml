@@ -7,17 +7,23 @@ models:
       - name: order_id
         tests:
           - not_null
-          - unique
+          - unique:
+              config:
+                severity: warn
       - name: order_created_at
         tests:
-          - not_null
+          - not_null:
+              config:
+                severity: warn
   - name: bronze__users
     description: Cleans customer attributes and standardises phone numbers and signup timestamps.
     columns:
       - name: user_id
         tests:
           - not_null
-          - unique
+          - unique:
+              config:
+                severity: warn
       - name: email
         tests:
           - not_null

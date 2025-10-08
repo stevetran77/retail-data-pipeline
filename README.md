@@ -1,142 +1,256 @@
 # Retail Data Pipeline
 
-A local-first playground for building a modern analytics stack on top of Google Cloud. The project pairs an Apache Airflow instance (running in Docker) with dbt, synthetic retail data, and Terraform modules so you can practice ingesting raw CSV files into Google Cloud Storage and shape them for downstream analytics in BigQuery.
+A complete end-to-end retail data pipeline powered by Apache Airflow, dbt, and Google Cloud Platform. This project demonstrates a modern data engineering workflow from synthetic data generation through transformations to analytics-ready tables in BigQuery.
+
+## Architecture
+
+```
+Generate Sample Data → Upload to GCS → Load to BigQuery → Deduplicate → dbt Transform
+                                                                        ├─ Bronze (Clean)
+                                                                        ├─ Silver (Enrich)
+                                                                        └─ Gold (Aggregate)
+```
 
 ## Features
-- Sample DAG that uploads CSV drops from `data_samples/` into a raw GCS bucket using a service account.
-- Synthetic retail dataset generator with deliberate data-quality issues for testing cleansing logic.
-- Terraform modules that provision the minimum GCP resources (bucket, dataset, service account) for the stack.
-- Skeleton dbt project ready to compile models against BigQuery once the raw layer is populated.
 
-## Repository Layout
-| Path | Description |
-| --- | --- |
-| `airflow/` | Dockerised Airflow stack (dags, configs, compose file, runtime keys/logs). |
-| `data_samples/` | Local CSV inputs; mounted into Airflow containers at `/opt/airflow/data_samples`. |
-| `dbt/retail/` | dbt project scaffold (macros, models, seeds, tests). |
-| `infra/` | Terraform configuration for bucket, dataset, and service account. |
-| `scripts/` | Utility scripts, including sample data generation. |
+- **Single DAG Pipeline**: One unified DAG (`retail_pipeline`) orchestrates the entire workflow
+- **Synthetic Data Generation**: Built-in Faker-based data generator with intentional duplicates for testing
+- **Automatic Deduplication**: Removes duplicate rows after loading to BigQuery
+- **Medallion Architecture**: Bronze → Silver → Gold layers using dbt
+- **Infrastructure as Code**: Terraform modules for GCP provisioning
+- **Dockerized Airflow**: Local development environment with Docker Compose
+
+## Repository Structure
+
+```
+retail-data-pipeline/
+├── airflow/
+│   ├── dags/
+│   │   └── retail_pipeline.py      # Main unified DAG
+│   ├── docker-compose.yaml         # Airflow services
+│   ├── keys/                       # GCP service account keys (gitignored)
+│   └── .env                        # Airflow configuration (gitignored)
+├── dbt/retail/
+│   ├── models/
+│   │   ├── bronze/                 # Raw data cleaning
+│   │   ├── silver/                 # Enriched tables
+│   │   └── gold/                   # Business metrics
+│   ├── macros/                     # Custom dbt macros
+│   └── profiles.yml                # dbt connection config
+├── infra/                          # Terraform GCP infrastructure
+└── data_samples/                   # CSV files (auto-generated)
+```
 
 ## Prerequisites
-- Docker Desktop 4.24+ (Compose v2) with at least 4 CPUs / 6 GB RAM allocated.
-- Terraform ≥ 1.5 if you want to provision the GCP infrastructure from `infra/`.
-- Python 3.13 (or `uv`, `pipx`, etc.) for running helper scripts locally.
-- A Google Cloud project with billing enabled and permissions to create buckets, datasets, and service accounts.
 
-## 1. Provision Cloud Resources (optional but recommended)
-1. Authenticate with gcloud and set your project: `gcloud config set project <PROJECT_ID>`.
-2. Update `infra/variables.tf` if you want a different region or dataset name.
-3. Initialise and apply Terraform:
-   ```bash
-   cd infra
-   terraform init
-   terraform apply -var="project_id=<PROJECT_ID>"
-   ```
-   Note the outputs:
-   - `bucket_name` (e.g. `retail-data-pipeline-dev-retail-raw`)
-   - `airflow_sa_email`
-   - `airflow_sa_key_base64`
-4. Store the generated service-account key JSON locally as `airflow/keys/airflow-sa.json` (this file is git-ignored).
+- **Docker Desktop** 4.24+ with 4 CPUs / 6 GB RAM
+- **Terraform** ≥ 1.5 (optional, for infrastructure provisioning)
+- **Python** 3.12+ with pip (for local dbt development)
+- **Google Cloud Project** with billing enabled
 
-If you already have a bucket and service account, place the existing JSON key under `airflow/keys/airflow-sa.json` and ensure it has permissions to write objects to the target bucket.
+## Quick Start
 
-## 2. Prepare Local Configuration
-Create `airflow/.env` with the Airflow user credentials and UID (Linux/mac requires matching UID; on Windows any value works):
-```dotenv
-AIRFLOW_UID=1000
+### 1. Provision GCP Infrastructure
+
+```bash
+cd infra
+terraform init
+terraform apply -var="project_id=YOUR_PROJECT_ID"
+```
+
+Save the generated service account key as `airflow/keys/airflow-sa.json`.
+
+### 2. Configure Airflow
+
+Create `airflow/.env`:
+
+```env
+AIRFLOW_UID=50000
 _AIRFLOW_WWW_USER_USERNAME=airflow
 _AIRFLOW_WWW_USER_PASSWORD=airflow
+
+# GCP Configuration
+GCP_PROJECT=retail-data-pipeline-dev
+GCS_BUCKET=retail-data-pipeline-raw
+GCS_TARGET_BUCKET=retail-data-pipeline-raw
+BQ_DATASET=retail_raw
+BQ_LOCATION=asia-southeast1
+BQ_TABLE_LIST=users,products,orders,order_items,sessions
+
+# dbt Configuration
+DBT_PROJECT_ID=retail-data-pipeline-dev
+DBT_RAW_DATASET=retail_raw
+DBT_DATASET=retail_prod
+DBT_LOCATION=asia-southeast1
+DBT_PROJECT_DIR=/opt/airflow/dbt/retail
+DBT_TARGET_DATASET=retail_prod
 ```
 
-Then create/update the Airflow variable file (`airflow/config/variables.json`) or set it later from the UI. At minimum you need the bucket name the DAG should write to:
-```json
-{
-  "GCS_INGEST_BUCKET": "retail-data-pipeline-raw"
-}
-```
-You may also set this via the Airflow UI (`Admin → Variables`) or by running `docker compose run --rm airflow-cli variables set ...`.
+### 3. Start Airflow
 
-## 3. Generate Sample Data
-Populate `data_samples/` with fresh CSVs (only `.csv` files are ingested). The helper script produces users, products, orders, order items, and sessions along with intentional dirty records:
-```bash
-python scripts/gen_sample_date.py
-```
-The Airflow stack mounts `../data_samples` into `/opt/airflow/data_samples`, so the DAG will see the files immediately.
-
-## 4. Start Airflow Locally
-1. Move into the Airflow folder and spin up the stack:
-   ```bash
-   cd airflow
-   docker compose up -d
-   ```
-2. Wait for the services to start (`docker compose ps`).
-3. Access the UI at http://localhost:8080 (defaults: `airflow` / `airflow`).
-4. Create the GCP connection if it does not already exist:
-   ```bash
-   docker compose run --rm airflow-cli connections add \
-     google_cloud_default \
-     --conn-type google_cloud_platform \
-     --conn-extra '{"extra__google_cloud_platform__project": "retail-data-pipeline-dev", "extra__google_cloud_platform__key_path": "/opt/airflow/keys/airflow-sa.json"}'
-   ```
-   Adjust the project and key path to match your setup.
-
-The compose file already disables tutorial DAGs, forces the UI to English, and mounts:
-- `dags/` → `/opt/airflow/dags`
-- `../data_samples/` → `/opt/airflow/data_samples`
-- `keys/` → `/opt/airflow/keys`
-
-## 5. Run the Ingestion DAG
-Trigger the DAG from the UI or run an ad-hoc test:
 ```bash
 cd airflow
-docker compose run --rm airflow-cli dags test ingest_data_samples_to_gcs 2024-01-01
+docker-compose up -d
 ```
-The DAG performs three steps:
-1. Resolve the destination bucket (`Variable GCS_INGEST_BUCKET` or `GCS_TARGET_BUCKET` env var).
-2. Discover only `.csv` files in `/opt/airflow/data_samples`.
-3. Upload each file with a dynamic task map using the connection `google_cloud_default`. Objects are written under `<yyyy-mm-dd>/<filename>` where the date is the UTC execution time.
 
-## 6. dbt Project and Orchestration
-The `dbt/retail` directory contains the models that shape raw extracts into analytics layers. You can run them locally for development or orchestrate them from Airflow once the raw tables are populated.
+Access the UI at http://localhost:8080 (credentials: `airflow` / `airflow`)
 
-**Local runs**
+### 4. Create GCP Connection
+
+```bash
+docker-compose exec airflow-scheduler airflow connections add google_cloud_default \
+  --conn-type google_cloud_platform \
+  --conn-extra '{
+    "extra__google_cloud_platform__project": "retail-data-pipeline-dev",
+    "extra__google_cloud_platform__key_path": "/opt/airflow/keys/airflow-sa.json"
+  }'
+```
+
+### 5. Run the Pipeline
+
+Trigger the `retail_pipeline` DAG from the Airflow UI or CLI:
+
+```bash
+docker-compose exec airflow-scheduler airflow dags trigger retail_pipeline
+```
+
+## Pipeline Stages
+
+### 1. Generate Sample Data
+- Creates synthetic retail data (1000 users, 200 products, 5000 orders)
+- Intentionally injects ~0.5% duplicates for testing deduplication
+- Outputs to `/opt/airflow/data_samples/`
+
+### 2. Ingest to GCS
+- Uploads CSV files to GCS bucket
+- Organizes by date: `gs://bucket/YYYY-MM-DD/*.csv`
+
+### 3. Load to BigQuery
+- Loads all CSVs to `retail_raw` dataset
+- Uses explicit schema for `users` table (avoids autodetect issues)
+- Autodetects schema for other tables
+
+### 4. Deduplicate
+- Runs `SELECT DISTINCT *` on each table
+- Removes duplicate rows while preserving all unique data
+- Reports duplicates removed per table
+
+### 5. dbt Transformations
+
+**Bronze Layer** (`retail_prod` dataset)
+- `bronze__users`: Clean names, normalize phones, parse timestamps
+- `bronze__orders`: Parse dates, clean text fields
+
+**Silver Layer**
+- `silver__orders_enriched`: Join orders with users, add date dimensions
+
+**Gold Layer**
+- `gold__daily_branch_metrics`: Aggregate sales by branch and date
+
+## dbt Local Development
+
 ```bash
 cd dbt/retail
-python -m venv .venv && source .venv/bin/activate  # or use uv/pipx
-pip install dbt-bigquery==1.8.2
+python -m venv .venv && source .venv/bin/activate
+pip install dbt-bigquery
+
 export DBT_PROJECT_ID=retail-data-pipeline-dev
 export DBT_DATASET=retail_prod
 export DBT_RAW_DATASET=retail_raw
-export GOOGLE_APPLICATION_CREDENTIALS=/path/to/airflow-sa.json
+export GOOGLE_APPLICATION_CREDENTIALS=../../airflow/keys/airflow-sa.json
+
 dbt deps
 dbt run --select path:models/bronze
+dbt test --select path:models/bronze
+dbt run --select path:models/silver path:models/gold
+dbt test
 ```
-Run `dbt run --select path:models/silver path:models/gold` and `dbt test` once you are happy with the bronze layer.
 
-**Airflow runs**
-1. Trigger `load_gcs_to_bq` to land the latest CSVs into the raw dataset.
-2. Trigger `dbt_pipeline` to execute `dbt deps`, run bronze models, test them, then build the silver and gold layers in the `retail_prod` dataset.
-3. Inspect the run logs in the Airflow UI or BigQuery console to verify new tables.
+## Useful Commands
 
-Environment variables such as `DBT_TARGET_DATASET`, `DBT_PROJECT_DIR`, and `DBT_PROFILES_DIR` are configurable via `airflow/.env` or the Compose file if you need to override defaults.
+### Airflow
+```bash
+# List DAGs
+docker-compose exec airflow-scheduler airflow dags list
 
-## 7. Useful Commands
-- List Airflow variables: `docker compose run --rm airflow-cli variables list`
-- Delete a manual DagRun: `docker compose run --rm airflow-cli dags delete <dag-id> --yes`
-- Tear down the stack (and volumes): `docker compose down -v`
-- Rotate the service-account key: rerun `terraform apply` or use `gcloud iam service-accounts keys create`.
+# Trigger DAG
+docker-compose exec airflow-scheduler airflow dags trigger retail_pipeline
+
+# View logs
+docker-compose logs -f airflow-scheduler
+
+# Restart services
+docker-compose restart
+
+# Clean up
+docker-compose down -v
+```
+
+### dbt (from Airflow container)
+```bash
+docker-compose exec airflow-scheduler bash -c "cd /opt/airflow/dbt/retail && dbt run"
+```
+
+## Data Quality
+
+The pipeline includes built-in data quality checks:
+
+- **Uniqueness tests**: Warn when duplicates found (should be 0 after deduplication)
+- **Not-null tests**: Warn when critical fields are null
+- **Freshness tests**: Ensure source data is recent
+- **Custom tests**: dbt_expectations package for advanced validations
+
+Tests are configured to **warn** rather than **fail** to allow pipeline to continue while flagging issues.
 
 ## Troubleshooting
-- **UI language not English** – the compose file sets `AIRFLOW__WEBSERVER__DEFAULT_UI_LANGUAGE=en`. If you still see another language, clear browser cache or override the setting via environment variables.
-- **`google_cloud_default` not found** – create the connection using the command above or through `Admin → Connections`.
-- **`Default credentials were not found`** – confirm the JSON key exists at `/opt/airflow/keys/airflow-sa.json` inside the container and the service account has Storage permissions.
-- **DAG uploads files into nested `raw/data_samples/...` prefixes** – adjust the `DEFAULT_OBJECT_PREFIX` constant in `dags/ingest_data_samples_to_gcs.py` if you prefer a different folder layout.
-- **Existing `.env` tracked by git** – the repo ignores `airflow/.env`. If your copy was committed previously, run `git rm --cached airflow/.env` once.
+
+**DAG not appearing**
+```bash
+docker-compose restart airflow-dag-processor
+docker-compose exec airflow-scheduler airflow dags list
+```
+
+**Connection error**
+```bash
+# Verify credentials
+docker-compose exec airflow-scheduler ls -la /opt/airflow/keys/
+# Test connection
+docker-compose exec airflow-scheduler airflow connections test google_cloud_default
+```
+
+**dbt errors**
+```bash
+# Check environment variables
+docker-compose exec airflow-scheduler env | grep DBT
+# Run dbt debug
+docker-compose exec airflow-scheduler bash -c "cd /opt/airflow/dbt/retail && dbt debug"
+```
+
+**Duplicate dataset names (e.g., retail_raw_retail_prod)**
+- This was fixed by adding custom `generate_schema_name` macro
+- Ensures dbt uses only `retail_prod` as target dataset
+
+## Architecture Decisions
+
+- **Single DAG**: Consolidates all steps for easier orchestration and monitoring
+- **Deduplication**: Performed at load time rather than in dbt for performance
+- **Warning-only tests**: Allows pipeline to complete while flagging data quality issues
+- **Explicit schema for users**: Avoids BigQuery autodetect issues with certain CSV formats
+- **Medallion layers**: Bronze (clean) → Silver (enrich) → Gold (aggregate)
 
 ## Next Steps
-- Build dbt staging and mart models off the data landing in BigQuery.
-- Add Airflow DAGs that load the CSVs into BigQuery tables (via the Storage → BigQuery transfer or custom hooks).
-- Add data-quality checks (Great Expectations, dbt tests) and notify on failures.
-- Integrate CI by running `dags test` and `dbt build` in GitHub Actions.
 
-Happy hacking! If you find issues or want to contribute improvements, feel free to open a PR.
+- [ ] Add incremental models in dbt
+- [ ] Implement CDC (Change Data Capture) from source systems
+- [ ] Add data validation with Great Expectations
+- [ ] Set up CI/CD pipeline with GitHub Actions
+- [ ] Add monitoring and alerting (e.g., Slack notifications)
+- [ ] Create Looker/Tableau dashboards
+
+## Contributing
+
+Contributions welcome! Please open an issue or PR with improvements.
+
+## License
+
+MIT

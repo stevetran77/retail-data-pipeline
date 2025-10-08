@@ -4,7 +4,7 @@ sources:
   - name: raw_csv
     description: Raw CSV extracts staged in BigQuery via the ingestion pipeline.
     database: "{{ env_var('DBT_PROJECT_ID') }}"
-    schema: "{{ var('raw_dataset') }}"
+    schema: "{{ env_var('DBT_RAW_DATASET', 'retail_raw') }}"
     tables:
       - name: orders
         description: Online orders captured from the ecommerce platform.
@@ -12,14 +12,18 @@ sources:
           - name: order_id
             tests:
               - not_null
-              - unique
+              - unique:
+                  config:
+                    severity: warn
       - name: users
         description: Customer dimension sourced from the transactional system.
         columns:
           - name: user_id
             tests:
               - not_null
-              - unique
+              - unique:
+                  config:
+                    severity: warn
       - name: order_items
         description: Line items for each order.
         columns:

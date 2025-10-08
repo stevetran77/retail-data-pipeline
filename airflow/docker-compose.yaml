@@ -76,6 +76,7 @@ x-airflow-common:
     DBT_TARGET_DATASET: ${DBT_TARGET_DATASET:-retail_prod}
     DBT_PROJECT_DIR: ${DBT_PROJECT_DIR:-/opt/airflow/dbt/retail}
     DBT_PROFILES_DIR: ${DBT_PROFILES_DIR:-/opt/airflow/dbt/retail}
+    DBT_PROJECT_ID: ${DBT_PROJECT_ID:-${GCP_PROJECT}}
     GOOGLE_APPLICATION_CREDENTIALS: ${GOOGLE_APPLICATION_CREDENTIALS:-/opt/airflow/keys/airflow-sa.json}
     # for other purpose (development, test and especially production usage) build/extend Airflow image.
     _PIP_ADDITIONAL_REQUIREMENTS: ${_PIP_ADDITIONAL_REQUIREMENTS:-}

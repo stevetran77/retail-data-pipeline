@@ -1,11 +1,42 @@
+# Python
 .venv/
-uv.lock
 __pycache__/
 *.pyc
+*.pyo
+*.pyd
+.Python
+uv.lock
+
+# Airflow
 airflow/logs/
 airflow/keys/*.json
 airflow/.env
+logs/
+
+# dbt
 dbt/target/
 dbt/logs/
+dbt/retail/dbt_packages/
+dbt/retail/target/
+dbt/retail/logs/
+dbt/retail/package-lock.yml
+
+# Terraform
 .terraform/
 *.tfstate*
+*.tfvars
+.terraform.lock.hcl
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Data
+data_samples/*.csv
