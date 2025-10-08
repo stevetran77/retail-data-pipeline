@@ -4,12 +4,8 @@ A complete end-to-end retail data pipeline powered by Apache Airflow, dbt, and G
 
 ## Architecture
 
-```
-Generate Sample Data → Upload to GCS → Load to BigQuery → Deduplicate → dbt Transform
-                                                                        ├─ Bronze (Clean)
-                                                                        ├─ Silver (Enrich)
-                                                                        └─ Gold (Aggregate)
-```
+<img width="1076" height="598" alt="image" src="https://github.com/user-attachments/assets/c8b7e926-e464-4e31-9dd3-ab137ae978a3" />
+
 
 ## Features
 
