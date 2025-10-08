@@ -1,0 +1,12 @@
+version: 2
+
+models:
+  - name: gold__daily_branch_metrics
+    description: Daily aggregates of branch performance metrics derived from enriched orders.
+    columns:
+      - name: order_date
+        tests:
+          - not_null
+      - name: branch
+        tests:
+          - not_null

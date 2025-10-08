@@ -1,0 +1,29 @@
+version: 2
+
+models:
+  - name: bronze__orders
+    description: Cleans raw order extracts and normalises date formats and text casing.
+    columns:
+      - name: order_id
+        tests:
+          - not_null
+          - unique:
+              config:
+                severity: warn
+      - name: order_created_at
+        tests:
+          - not_null:
+              config:
+                severity: warn
+  - name: bronze__users
+    description: Cleans customer attributes and standardises phone numbers and signup timestamps.
+    columns:
+      - name: user_id
+        tests:
+          - not_null
+          - unique:
+              config:
+                severity: warn
+      - name: email
+        tests:
+          - not_null

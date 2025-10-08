@@ -1,0 +1,17 @@
+version: 2
+
+models:
+  - name: silver__orders_enriched
+    description: Enriches orders with user attributes and derived calendar fields.
+    columns:
+      - name: order_id
+        tests:
+          - not_null
+          - unique:
+              config:
+                severity: warn
+      - name: order_date
+        tests:
+          - not_null:
+              config:
+                severity: warn
